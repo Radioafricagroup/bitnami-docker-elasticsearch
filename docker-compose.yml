@@ -1,15 +1,34 @@
-version: '2'
+version: '3.4'
 
 services:
   elasticsearch:
-    image: 'bitnami/elasticsearch:latest'
+    #image: 'bitnami/elasticsearch:latest'
+    image: 'bitnami/elasticsearch:2.3.5-r1'
     labels:
       kompose.service.type: nodeport
     ports:
       - '9200:9200'
       - '9300:9300'
+    deploy:
+      placement:
+          constraints:
+            - node.labels.sdp != staging
     volumes:
-      - 'elasticsearch_data:/bitnami'
-volumes:
-  elasticsearch_data:
-    driver: local
+        - type: volume
+          source: rad-eslasticsearch
+          target: /bitnami
+          volume:
+            perfmode: maxio
+            nocopy: true
+    stop_grace_period: 1m
+    stop_signal: KILL
+    deploy:
+        replicas: 1
+        update_config:
+          parallelism: 2
+          delay: 60s
+          failure_action: rollback
+          max_failure_ratio: 0.3
+          order: start-first
+        restart_policy:
+          condition: on-failure
